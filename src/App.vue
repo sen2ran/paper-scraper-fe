@@ -129,7 +129,7 @@ interface ScrapedData {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-gray-100">
+  <div class="flex flex-col min-h-screen bg-gray-100">
     <!-- Navigation bar -->
     <nav class="bg-blue-600 shadow-lg">
       <div class="max-w-6xl mx-auto px-4">
@@ -146,11 +146,11 @@ interface ScrapedData {
     </nav>
 
     <!-- Main content area -->
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
       <!-- Left side: File upload and image display -->
-      <div class="w-1/2 p-6 flex flex-col overflow-auto">
-        <h2 class="text-2xl font-bold mb-4">Upload Document</h2>
-        <div class="mb-4">
+      <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col overflow-auto">
+        <h2 class="text-xl md:text-2xl font-bold mb-4">Upload Document</h2>
+        <div class="mb-4 flex flex-wrap gap-2">
           <input
             type="file"
             @change="onFileSelected"
@@ -160,13 +160,13 @@ interface ScrapedData {
           />
           <button
             @click="fileInput.click()"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm md:text-base"
           >
             Select Image
           </button>
           <button
             @click="scrapeData"
-            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded text-sm md:text-base"
             :disabled="!imageUrl"
           >
             Scrape Data
@@ -178,9 +178,13 @@ interface ScrapedData {
       </div>
 
       <!-- Right side: Extracted data -->
-      <div class="w-1/2 p-6 bg-white overflow-auto">
-        <h2 class="text-2xl font-bold mb-4">Extracted Data</h2>
-        <pre v-if="scrapedData" class="json-display" v-html="formattedJson"></pre>
+      <div class="w-full md:w-1/2 p-4 md:p-6 bg-white overflow-auto">
+        <h2 class="text-xl md:text-2xl font-bold mb-4">Extracted Data</h2>
+        <pre
+          v-if="scrapedData"
+          class="json-display text-sm md:text-base"
+          v-html="formattedJson"
+        ></pre>
         <p v-else class="text-gray-600">Scraped data will be displayed here.</p>
       </div>
     </div>
@@ -188,7 +192,7 @@ interface ScrapedData {
     <!-- Loader -->
     <div
       v-if="isLoading"
-      class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
       <div class="loader"></div>
     </div>
@@ -196,7 +200,7 @@ interface ScrapedData {
     <!-- Error Popup -->
     <div
       v-if="errorMessage"
-      class="absolute top-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg"
+      class="fixed top-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg z-50 max-w-xs md:max-w-md"
     >
       {{ errorMessage }}
       <button @click="errorMessage = ''" class="ml-4 font-bold">×</button>
