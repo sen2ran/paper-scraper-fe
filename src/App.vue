@@ -4,7 +4,7 @@ import axios from 'axios'
 
 const imageUrl = ref<string | null>(null)
 const imageFile = ref<File | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
+const fileInput = ref<any>(null)
 const scrapedData = ref<any>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
