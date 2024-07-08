@@ -21,7 +21,7 @@ const onFileSelected = (event: Event) => {
 const checkApiStatus = async () => {
   try {
     const response = await axios.get(
-      'https://vercel-scraper-djlojpqv7-senthurans-projects.vercel.app/api/health'
+      'https://vercel-scraper-k6nl52uaa-senthurans-projects.vercel.app/api/health'
     )
     console.log('API Status:', response.data)
   } catch (error) {
@@ -44,7 +44,7 @@ const scrapeData = async () => {
     const base64Image = await fileToBase64(imageFile.value)
     // Send base64 image to API
     const response = await axios.post<ScrapedData>(
-      'https://vercel-scraper-djlojpqv7-senthurans-projects.vercel.app/api/upload',
+      'https://vercel-scraper-k6nl52uaa-senthurans-projects.vercel.app/api/upload',
       {
         image: base64Image
       },
