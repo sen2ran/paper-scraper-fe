@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
+const imageName = ref('')
 const imageUrl = ref<string | null>(null)
 const imageFile = ref<File | null>(null)
 const fileInput = ref<any>(null)
@@ -15,6 +16,7 @@ const onFileSelected = (event: Event) => {
   if (file) {
     imageFile.value = file
     imageUrl.value = URL.createObjectURL(file)
+    imageName.value = file.name
   }
 }
 
@@ -87,6 +89,15 @@ const formattedJson = computed(() => {
   return formatJson(scrapedData.value)
 })
 
+const removeImage = () => {
+  imageUrl.value = null
+  imageFile.value = null
+  imageName.value = ''
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
 function formatJson(obj: any): string {
   return JSON.stringify(obj, null, 2)
     .replace(/&/g, '&amp;')
@@ -129,28 +140,34 @@ interface ScrapedData {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-100">
+  <div class="flex flex-col min-h-screen bg-gray-50">
     <!-- Navigation bar -->
-    <nav class="bg-blue-600 shadow-lg">
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="flex justify-between">
-          <div class="flex space-x-7">
-            <div>
-              <a href="#" class="flex items-center py-4 px-2">
-                <span class="font-semibold text-white text-lg">Document Scraper</span>
-              </a>
-            </div>
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center">
+            <a href="#" class="flex items-center">
+              <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span class="ml-2 font-bold text-white text-xl">Docu Scraper</span>
+            </a>
           </div>
         </div>
       </div>
     </nav>
 
     <!-- Main content area -->
-    <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+    <div class="flex-1 flex flex-col md:flex-row">
       <!-- Left side: File upload and image display -->
-      <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col overflow-auto">
-        <h2 class="text-xl md:text-2xl font-bold mb-4">Upload Document</h2>
-        <div class="mb-4 flex flex-wrap gap-2">
+      <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col">
+        <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Upload Document</h2>
+        <div class="mb-6 flex flex-wrap gap-4">
           <input
             type="file"
             @change="onFileSelected"
@@ -160,32 +177,57 @@ interface ScrapedData {
           />
           <button
             @click="fileInput.click()"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm md:text-base"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105"
           >
             Select Image
           </button>
           <button
             @click="scrapeData"
-            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded text-sm md:text-base"
+            class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105"
             :disabled="!imageUrl"
+            :class="{ 'opacity-50 cursor-not-allowed': !imageUrl }"
           >
             Scrape Data
           </button>
         </div>
-        <div v-if="imageUrl" class="flex-1 overflow-auto">
-          <img :src="imageUrl" alt="Uploaded document" class="max-w-full h-auto object-contain" />
+        <div
+          v-if="imageUrl"
+          class="flex-1 flex flex-col items-center justify-center bg-gray-100 rounded-lg shadow-inner p-4 overflow-hidden"
+        >
+          <div
+            class="relative w-full max-w-2xl aspect-[3/4] bg-white rounded-lg shadow-md overflow-hidden"
+          >
+            <img
+              :src="imageUrl"
+              alt="Uploaded document"
+              class="absolute inset-0 w-full h-full object-contain"
+            />
+          </div>
+          <p class="mt-4 text-sm text-gray-600">{{ imageName }}</p>
+          <button @click="removeImage" class="mt-2 text-red-500 hover:text-red-600 font-semibold">
+            Remove Image
+          </button>
+        </div>
+        <div
+          v-else
+          class="flex-1 flex items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 p-4"
+        >
+          <p class="text-gray-500 text-center">
+            No image uploaded. <br />
+            Select an image to display it here.
+          </p>
         </div>
       </div>
-
       <!-- Right side: Extracted data -->
-      <div class="w-full md:w-1/2 p-4 md:p-6 bg-white overflow-auto">
-        <h2 class="text-xl md:text-2xl font-bold mb-4">Extracted Data</h2>
-        <pre
+      <div class="w-full md:w-1/2 p-6 md:p-8 bg-white shadow-md">
+        <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Extracted Data</h2>
+        <div
           v-if="scrapedData"
-          class="json-display text-sm md:text-base"
-          v-html="formattedJson"
-        ></pre>
-        <p v-else class="text-gray-600">Scraped data will be displayed here.</p>
+          class="bg-gray-100 rounded-lg p-4 overflow-auto max-h-[calc(100vh-12rem)]"
+        >
+          <pre class="json-display text-sm md:text-base" v-html="formattedJson"></pre>
+        </div>
+        <p v-else class="text-gray-600 italic">Scraped data will be displayed here.</p>
       </div>
     </div>
 
@@ -194,16 +236,30 @@ interface ScrapedData {
       v-if="isLoading"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
-      <div class="loader"></div>
+      <div
+        class="loader animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"
+      ></div>
     </div>
 
     <!-- Error Popup -->
     <div
       v-if="errorMessage"
-      class="fixed top-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg z-50 max-w-xs md:max-w-md"
+      class="fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-xs md:max-w-md animate-fade-in-down"
     >
-      {{ errorMessage }}
-      <button @click="errorMessage = ''" class="ml-4 font-bold">×</button>
+      <p>{{ errorMessage }}</p>
+      <button
+        @click="errorMessage = ''"
+        class="absolute top-2 right-2 text-white hover:text-gray-200"
+      >
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -252,5 +308,25 @@ interface ScrapedData {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.5s ease-out;
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.json-display {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 </style>
