@@ -9,6 +9,45 @@ const fileInput = ref<any>(null)
 const scrapedData = ref<any>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const showModal = ref(false)
+const returnType = ref('json') // Default to JSON
+const selectedContentType = ref('')
+
+const returnTypes = [
+  {
+    value: 'structured',
+    label: 'JSON',
+    icon: '🧱',
+    description: 'Organized data, easy for further processing'
+  },
+  {
+    value: 'readable',
+    label: 'Easy to Read',
+    icon: '📖',
+    description: 'Formatted for human readability'
+  }
+]
+
+const contentTypes = [
+  {
+    value: 'form',
+    label: 'Form',
+    icon: '📝',
+    description: 'Structured data with labels and values'
+  },
+  {
+    value: 'table',
+    label: 'Table',
+    icon: '📊',
+    description: 'Data organized in rows and columns'
+  },
+  {
+    value: 'paragraph',
+    label: 'Paragraph',
+    icon: '📄',
+    description: 'Unstructured text content'
+  }
+]
 
 const onFileSelected = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -32,9 +71,9 @@ const checkApiStatus = async () => {
 }
 
 const scrapeData = async () => {
-  if (!imageFile.value) {
-    errorMessage.value = 'No image file selected'
-    console.error('No image file selected')
+  console.log(imageFile.value, selectedContentType.value, returnType.value)
+
+  if (!imageFile.value || !selectedContentType.value || !returnType.value) {
     return
   }
 
@@ -42,13 +81,14 @@ const scrapeData = async () => {
   errorMessage.value = ''
 
   try {
-    // Convert image to base64
     const base64Image = await fileToBase64(imageFile.value)
-    // Send base64 image to API
+
     const response = await axios.post<ScrapedData>(
       'https://vercel-scraper-k6nl52uaa-senthurans-projects.vercel.app/api/upload',
       {
-        image: base64Image
+        image: base64Image,
+        contentType: selectedContentType.value,
+        returnType: returnType.value
       },
       {
         headers: {
@@ -57,14 +97,69 @@ const scrapeData = async () => {
       }
     )
 
-    console.log('Scraped data:', JSON.parse(response.data.data.content[0].text))
     scrapedData.value = JSON.parse(response.data.data.content[0].text)
-    // Handle the scraped data here
+    console.log('Scraped data:', response.data)
   } catch (error) {
     console.error('Error scraping data:', error)
     errorMessage.value = 'Failed to scrape data. Please try again.'
   } finally {
     isLoading.value = false
+  }
+}
+
+// const scrapeData = async () => {
+//   if (!imageFile.value) {
+//     errorMessage.value = 'No image file selected'
+//     console.error('No image file selected')
+//     return
+//   }
+
+//   isLoading.value = true
+//   errorMessage.value = ''
+
+//   try {
+//     // Convert image to base64
+//     const base64Image = await fileToBase64(imageFile.value)
+//     // Send base64 image to API
+//     const response = await axios.post<ScrapedData>(
+//       'https://vercel-scraper-k6nl52uaa-senthurans-projects.vercel.app/api/upload',
+//       {
+//         image: base64Image
+//       },
+//       {
+//         headers: {
+//           'Content-Type': 'application/json'
+//         }
+//       }
+//     )
+
+//     console.log('Scraped data:', JSON.parse(response.data.data.content[0].text))
+//     scrapedData.value = JSON.parse(response.data.data.content[0].text)
+//     // Handle the scraped data here
+//   } catch (error) {
+//     console.error('Error scraping data:', error)
+//     errorMessage.value = 'Failed to scrape data. Please try again.'
+//   } finally {
+//     isLoading.value = false
+//   }
+// }
+
+const showScrapeOptions = () => {
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  // selectedContentType.value = ''
+  returnType.value = 'json'
+}
+
+const confirmScrape = () => {
+  console.log(selectedContentType.value, returnType.value)
+
+  if (selectedContentType.value && returnType.value) {
+    closeModal()
+    scrapeData()
   }
 }
 
@@ -155,7 +250,7 @@ interface ScrapedData {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <span class="ml-2 font-bold text-white text-xl">Docu Scraper</span>
+              <span class="ml-2 font-bold text-white text-xl">Document Scraper</span>
             </a>
           </div>
         </div>
@@ -166,7 +261,7 @@ interface ScrapedData {
     <div class="flex-1 flex flex-col md:flex-row">
       <!-- Left side: File upload and image display -->
       <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col">
-        <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Upload Document</h2>
+        <h2 class="text-3xl md:text-3xl font-bold mb-6 text-gray-800">Upload Document</h2>
         <div class="mb-6 flex flex-wrap gap-4">
           <input
             type="file"
@@ -182,7 +277,7 @@ interface ScrapedData {
             Select Image
           </button>
           <button
-            @click="scrapeData"
+            @click="showScrapeOptions"
             class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105"
             :disabled="!imageUrl"
             :class="{ 'opacity-50 cursor-not-allowed': !imageUrl }"
@@ -261,6 +356,94 @@ interface ScrapedData {
         </svg>
       </button>
     </div>
+
+    <!-- Scrape Options Modal -->
+    <transition
+      enter-active-class="ease-out duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <div
+          class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all"
+          :class="showModal ? 'scale-100 opacity-100' : 'scale-95 opacity-0'"
+        >
+          <h3 class="text-2xl font-bold mb-4 text-gray-800">Select Content Type</h3>
+          <!-- Content Type Selection -->
+          <p class="text-gray-600 mb-3">Choose the type of content you're trying to scrape:</p>
+          <div class="space-y-3 mb-6">
+            <button
+              v-for="type in contentTypes"
+              :key="type.value"
+              @click="selectedContentType = type.value"
+              class="w-full text-left p-4 rounded-lg border transition-colors duration-200 flex items-center"
+              :class="
+                selectedContentType === type.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+              "
+            >
+              <span class="text-xl mr-4" v-html="type.icon"></span>
+              <div>
+                <span class="font-semibold text-gray-800">{{ type.label }}</span>
+                <p class="text-sm text-gray-600">{{ type.description }}</p>
+              </div>
+            </button>
+          </div>
+
+          <!-- Return Type Selection -->
+          <p class="text-gray-600 mb-3">How would you like the results presented?</p>
+          <div class="space-y-3 mb-6">
+            <label
+              v-for="type in returnTypes"
+              :key="type.value"
+              class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors duration-200"
+              :class="
+                returnType === type.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+              "
+            >
+              <input
+                type="radio"
+                :value="type.value"
+                v-model="returnType"
+                class="form-radio text-blue-500 mr-3"
+              />
+              <div class="flex items-center">
+                <!-- <span class="text-xl mr-3" v-html="type.icon"></span> -->
+                <div>
+                  <span class="font-semibold text-gray-800">{{ type.label }}</span>
+                  <p class="text-sm text-gray-600">{{ type.description }}</p>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              @click="closeModal"
+              class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              @click="confirmScrape"
+              class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+              :disabled="!selectedContentType || !returnType"
+            >
+              Scrape
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
