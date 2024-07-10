@@ -2,6 +2,9 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
+// const baseURL = 'http://localhost:3000/api/'
+const baseURL = 'https://vercel-scraper-k8oovf257-senthurans-projects.vercel.app/api'
+
 const imageName = ref('')
 const imageUrl = ref<string | null>(null)
 const imageFile = ref<File | null>(null)
@@ -12,6 +15,11 @@ const errorMessage = ref('')
 const showModal = ref(false)
 const returnType = ref('json') // Default to JSON
 const selectedContentType = ref('')
+
+const formattedJson = computed(() => {
+  if (!scrapedData.value) return ''
+  return returnType.value == 'json' ? formatJson(scrapedData.value) : scrapedData.value
+})
 
 const returnTypes = [
   {
@@ -61,19 +69,17 @@ const onFileSelected = (event: Event) => {
 
 const checkApiStatus = async () => {
   try {
-    const response = await axios.get(
-      'https://vercel-scraper-k6nl52uaa-senthurans-projects.vercel.app/api/health'
-    )
+    const response = await axios.get(`${baseURL}/health`)
     console.log('API Status:', response.data)
   } catch (error) {
     console.error('Error checking API status:', error)
   }
 }
 
-const scrapeData = async () => {
-  console.log(imageFile.value, selectedContentType.value, returnType.value)
+const scrapeData = async (selectedContentType: string, returnType: string) => {
+  console.log(imageFile.value, selectedContentType, returnType)
 
-  if (!imageFile.value || !selectedContentType.value || !returnType.value) {
+  if (!imageFile.value || !selectedContentType || !returnType) {
     return
   }
 
@@ -84,11 +90,11 @@ const scrapeData = async () => {
     const base64Image = await fileToBase64(imageFile.value)
 
     const response = await axios.post<ScrapedData>(
-      'https://vercel-scraper-k6nl52uaa-senthurans-projects.vercel.app/api/upload',
+      `${baseURL}/upload`,
       {
         image: base64Image,
-        contentType: selectedContentType.value,
-        returnType: returnType.value
+        contentType: selectedContentType,
+        returnType: returnType
       },
       {
         headers: {
@@ -97,7 +103,10 @@ const scrapeData = async () => {
       }
     )
 
-    scrapedData.value = JSON.parse(response.data.data.content[0].text)
+    scrapedData.value =
+      returnType == 'json'
+        ? JSON.parse(response.data.data.content[0].text)
+        : response.data.data.content[0].text
     console.log('Scraped data:', response.data)
   } catch (error) {
     console.error('Error scraping data:', error)
@@ -151,7 +160,7 @@ const showScrapeOptions = () => {
 const closeModal = () => {
   showModal.value = false
   // selectedContentType.value = ''
-  returnType.value = 'json'
+  // returnType.value = 'json'
 }
 
 const confirmScrape = () => {
@@ -159,7 +168,7 @@ const confirmScrape = () => {
 
   if (selectedContentType.value && returnType.value) {
     closeModal()
-    scrapeData()
+    scrapeData(selectedContentType.value, returnType.value)
   }
 }
 
@@ -178,11 +187,6 @@ const fileToBase64 = (file: File): Promise<string> => {
     reader.onerror = (error) => reject(error)
   })
 }
-
-const formattedJson = computed(() => {
-  if (!scrapedData.value) return ''
-  return formatJson(scrapedData.value)
-})
 
 const removeImage = () => {
   imageUrl.value = null
@@ -320,7 +324,12 @@ interface ScrapedData {
           v-if="scrapedData"
           class="bg-gray-100 rounded-lg p-4 overflow-auto max-h-[calc(100vh-12rem)]"
         >
-          <pre class="json-display text-sm md:text-base" v-html="formattedJson"></pre>
+          <template v-if="returnType === 'structured'">
+            <pre class="json-display text-sm md:text-base" v-html="formattedJson"></pre>
+          </template>
+          <template v-else>
+            <div v-html="formattedJson"></div>
+          </template>
         </div>
         <p v-else class="text-gray-600 italic">Scraped data will be displayed here.</p>
       </div>
