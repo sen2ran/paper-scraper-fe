@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
 // const baseURL = 'http://localhost:3000/api/'
-const baseURL = 'https://vercel-scraper-bjx83rc3r-senthurans-projects.vercel.app/api'
+const baseURL = 'https://vercel-scraper-4a1zfivo5-senthurans-projects.vercel.app/api'
 
 const imageName = ref('')
 const imageUrl = ref<string | null>(null)
@@ -103,11 +103,31 @@ const scrapeData = async (selectedContentType: string, returnType: string) => {
       }
     )
 
-    scrapedData.value =
-      returnType == 'json'
-        ? JSON.parse(response.data.data.content[0].text)
-        : response.data.data.content[0].text
-    console.log('Scraped data:', response.data)
+    if (returnType == 'json') {
+      scrapedData.value = JSON.parse(response.data.data.content[0].text)
+    } else {
+      scrapedData.value = 'Genarating Human Readble for Text'
+
+      const response2 = await axios.post<ScrapedData>(
+        `${baseURL}/html-genarator`,
+        {
+          content: response.data.data.content[0].text
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      scrapedData.value = response2.data.data.content[0].text
+    }
+
+    // scrapedData.value =
+    //   returnType == 'json'
+    //     ? JSON.parse(response.data.data.content[0].text)
+    //     : response.data.data.content[0].text
+    // console.log('Scraped data:', response.data)
   } catch (error) {
     console.error('Error scraping data:', error)
     errorMessage.value = 'Failed to scrape data. Please try again.'
