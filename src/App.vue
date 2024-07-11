@@ -103,7 +103,7 @@ const scrapeData = async (selectedContentType: string, returnType: string) => {
       }
     )
 
-    if (returnType == 'json') {
+    if (returnType == 'structured') {
       scrapedData.value = JSON.parse(response.data.data.content[0].text)
     } else {
       scrapedData.value = 'Genarating Human Readble for Text'
