@@ -42,19 +42,19 @@ const contentTypes = [
     label: 'Form',
     icon: '📝',
     description: 'Structured data with labels and values'
-  },
-  {
-    value: 'table',
-    label: 'Table',
-    icon: '📊',
-    description: 'Data organized in rows and columns'
-  },
-  {
-    value: 'paragraph',
-    label: 'Paragraph',
-    icon: '📄',
-    description: 'Unstructured text content'
   }
+  // {
+  //   value: 'table',
+  //   label: 'Table',
+  //   icon: '📊',
+  //   description: 'Data organized in rows and columns'
+  // },
+  // {
+  //   value: 'paragraph',
+  //   label: 'Paragraph',
+  //   icon: '📄',
+  //   description: 'Unstructured text content'
+  // }
 ]
 
 const onFileSelected = (event: Event) => {
