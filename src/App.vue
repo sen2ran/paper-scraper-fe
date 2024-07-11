@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
 // const baseURL = 'http://localhost:3000/api/'
-const baseURL = 'https://vercel-scraper-n4n0pi86j-senthurans-projects.vercel.app/api'
+const baseURL = 'https://vercel-scraper-bjx83rc3r-senthurans-projects.vercel.app/api'
 
 const imageName = ref('')
 const imageUrl = ref<string | null>(null)
